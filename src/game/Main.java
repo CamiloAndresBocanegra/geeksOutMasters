@@ -8,6 +8,7 @@ public class Main
     {
         EventQueue.invokeLater(() ->
         {
+            new Window();
         });
     }
 }
