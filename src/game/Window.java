@@ -18,6 +18,7 @@ public class Window extends JFrame
     Dice[] dices;
     Random rng;
 
+    JPanel windowPanel;
 //    DebugPanel DEBUGPanel;
     JLabel selectedDiceLabel;
     JTextArea diceExplanationText;
@@ -29,6 +30,7 @@ public class Window extends JFrame
     JPanel pointsPanel;
     JPanel usedDicesPanel;
 
+    JLabel pointsPanelImage;
     JButton nextRoundButton;
 
     DiceListener diceListener;
@@ -42,14 +44,21 @@ public class Window extends JFrame
                 HERO = 4,
                 N42= 5;
 
+    final String HELP_TEXT = "- Se jugaran 5 rondas. \n" +
+            "- Si consigues mas de 30 puntos ganas. \n" +
+            "- Por cada dado 42 que consigas al final de cada ronda\n" +
+            "sumas puntos. \n" +
+            "- Si solo quedan dragones al final de la ronda, \n" +
+            "pierdes todos los puntos.";
+
     public Window()
     {
         initWindow();
 
 //        pack();
 //        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setSize(800,800);
         setExtendedState(getExtendedState() | MAXIMIZED_BOTH);
+        setSize(1360,755);
     }
 
     public void initWindow()
@@ -63,8 +72,9 @@ public class Window extends JFrame
 
 
 //main window panel
-        JPanel windowPanel = new JPanel();
+        windowPanel = new JPanel();
         windowPanel.setLayout(new GridLayout(2, 3));
+        windowPanel.setPreferredSize(new Dimension(1360,755));
         add(windowPanel);
 
 //creating and adding panels
@@ -85,13 +95,42 @@ public class Window extends JFrame
 //
 //        windowPanel.add(scrollPane);
     //-
+
+
         windowPanel.add(selectedDicePanel);
 
-        windowPanel.add(activeDicesPanel);
-        windowPanel.add(inactiveDicesPanel);
+        JPanel activeDicesParent = new JPanel();
+
+        activeDicesParent.add(new JLabel("Dados Activos"));
+        activeDicesParent.add(activeDicesPanel);
+        activeDicesPanel.setLayout(new GridLayout(3, 3));
+        windowPanel.add(activeDicesParent);
+
+        JPanel inactiveDicesParent = new JPanel();
+        inactiveDicesParent.add(new JLabel("Dados Inactivos"));
+        inactiveDicesParent.add(inactiveDicesPanel);
+        windowPanel.add(inactiveDicesParent);
+
         windowPanel.add(actionsPanel);
+
         windowPanel.add(pointsPanel);
-        windowPanel.add(usedDicesPanel);
+        {
+            ImageIcon pointsImage = new ImageIcon(getClass().getResource("/resources/points/0.png"));
+            pointsPanelImage = new JLabel();
+            pointsPanelImage.setIcon(pointsImage);
+        }
+        pointsPanel.add(pointsPanelImage);
+
+        JPanel usedDicesParent = new JPanel();
+        usedDicesParent.add(new JLabel("Dados Usados"));
+        usedDicesParent.add(usedDicesPanel);
+        windowPanel.add(usedDicesParent);
+
+
+        JLabel inactiveDicesTitle = new JLabel("titulo");
+        JLabel usedDicesTitle = new JLabel("titulo");
+
+
 // Dices Creation
         rng = new Random();
 
@@ -121,15 +160,17 @@ public class Window extends JFrame
 // Buttons
         resetDicesPositions();
 
-        nextRoundButton = new JButton("next round");
+        nextRoundButton = new JButton("Siguiente Ronda");
         nextRoundButton.addActionListener(new nextRoundListener());
         actionsPanel.add(nextRoundButton);
 
 // exit button
-        JButton exitButton = new JButton("Exit");
+        JButton exitButton = new JButton("Salir");
         ExitButtonListener exitListener = new ExitButtonListener();
         exitButton.addActionListener(exitListener);
         actionsPanel.add(exitButton);
+
+        actionsPanel.add(new JTextArea(HELP_TEXT));
     }
 
     public void moveDice(int diceId, JPanel to)
@@ -240,8 +281,10 @@ public class Window extends JFrame
             }
 //            DEBUGPanel.write("you earned points ");
         }
+        updatePointsPanel();
         roundEnded = true;
         checkWin();
+        activeDicesPanel.setBackground(new Color(90,120,255));
     }
 
     public void checkWin()
@@ -259,6 +302,12 @@ public class Window extends JFrame
             nextRoundButton.setText("Restart Game");
             gameEnded = true;
         }
+    }
+
+    public void updatePointsPanel()
+    {
+        ImageIcon pointsImage = new ImageIcon(getClass().getResource("/resources/points/"+ winDicesCount +".png"));
+        pointsPanelImage.setIcon(pointsImage);
     }
 
     public void resetDicesPositions()
@@ -311,7 +360,8 @@ public class Window extends JFrame
             case HEART:
             {
                 outputText = "Corazon seleccionado \n" +
-                        "Al usar su habilidad en uno de los dados inactivos, lo trae a los dados activos y lo tira \n";
+                        "Al usar su habilidad en uno de los dados inactivos,\n" +
+                        " lo trae a los dados activos y lo tira \n";
             }break;
             case ROCKET:
             {
@@ -321,7 +371,7 @@ public class Window extends JFrame
             case HERO:
             {
                 outputText = "Heroe seleccionado \n" +
-                        "Al usar su habilidad sobre otro dado, le da la vuelta a} su cara contraria \n";
+                        "Al usar su habilidad sobre otro dado, le da la vuelta a su cara contraria \n";
             }break;
             case N42:
             {
@@ -370,21 +420,21 @@ public class Window extends JFrame
 //                        meeple: throw dice
                         throwDice(((Dice) e.getSource()).id);
                         moveDice(selectedDice, usedDicesPanel);
-                        selectedDice = -1;
+                        setSelectedDice(NONE);
                     }break;
                     case ROCKET:
                     {
 //                        rocket: move to inactive
                         moveDice(((Dice) e.getSource()).id, inactiveDicesPanel);
                         moveDice(selectedDice, usedDicesPanel);
-                        selectedDice = -1;
+                        setSelectedDice(NONE);
                     }break;
                     case HERO:
                     {
 //                        hero: flip
                         flipDice(((Dice) e.getSource()).id);
                         moveDice(selectedDice, usedDicesPanel);
-                        selectedDice = -1;
+                        setSelectedDice(NONE);
                     }break;
                     default: // (2) heart, (1)dragon, (5)42
                     {
@@ -408,7 +458,7 @@ public class Window extends JFrame
                 {
                     moveDice(((Dice) e.getSource()).id, activeDicesPanel);
                     moveDice(selectedDice, usedDicesPanel);
-                    selectedDice = NONE;
+                    setSelectedDice(NONE);
 
                     checkRoundEnd();
                 }
