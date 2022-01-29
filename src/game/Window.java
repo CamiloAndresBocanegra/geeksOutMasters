@@ -18,7 +18,10 @@ public class Window extends JFrame
     Dice[] dices;
     Random rng;
 
-    DebugPanel DEBUGPanel;
+//    DebugPanel DEBUGPanel;
+    JLabel selectedDiceLabel;
+    JTextArea diceExplanationText;
+    JPanel selectedDicePanel;
 
     JPanel activeDicesPanel;
     JPanel inactiveDicesPanel;
@@ -30,6 +33,14 @@ public class Window extends JFrame
 
     DiceListener diceListener;
     inactiveDiceListener inactiveDiceListener;
+
+    final int   NONE = -1,
+                MEEPLE = 0,
+                DRAGON = 1,
+                HEART = 2,
+                ROCKET = 3,
+                HERO = 4,
+                N42= 5;
 
     public Window()
     {
@@ -57,17 +68,25 @@ public class Window extends JFrame
         add(windowPanel);
 
 //creating and adding panels
+        selectedDicePanel = new JPanel();
+        selectedDicePanel.setLayout(new BoxLayout(selectedDicePanel, BoxLayout.Y_AXIS));
+
         activeDicesPanel = new JPanel();
         inactiveDicesPanel = new JPanel();
         actionsPanel = new JPanel();
         pointsPanel = new JPanel();
         usedDicesPanel = new JPanel();
 
-        DEBUGPanel = new DebugPanel();
+    // Debug
 
-        JScrollPane scrollPane = new JScrollPane(DEBUGPanel);
+//        DEBUGPanel = new DebugPanel();
+//
+//        JScrollPane scrollPane = new JScrollPane(DEBUGPanel);
+//
+//        windowPanel.add(scrollPane);
+    //-
+        windowPanel.add(selectedDicePanel);
 
-        windowPanel.add(scrollPane);
         windowPanel.add(activeDicesPanel);
         windowPanel.add(inactiveDicesPanel);
         windowPanel.add(actionsPanel);
@@ -86,14 +105,25 @@ public class Window extends JFrame
             dices[i] = new Dice();
             dices[i].id = i;
         }
+
+//Selected Dice view
+        {
+            ImageIcon image = new ImageIcon(getClass().getResource("/resources/-1.png"));
+            selectedDiceLabel = new JLabel();
+            selectedDiceLabel.setIcon(image);
+            selectedDiceLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            selectedDicePanel.add(selectedDiceLabel);
+
+            diceExplanationText = new JTextArea();
+            selectedDicePanel.add(diceExplanationText);
+        }
+
 // Buttons
         resetDicesPositions();
 
         nextRoundButton = new JButton("next round");
         nextRoundButton.addActionListener(new nextRoundListener());
         actionsPanel.add(nextRoundButton);
-
-// Debug
 
 // exit button
         JButton exitButton = new JButton("Exit");
@@ -117,7 +147,7 @@ public class Window extends JFrame
             throwDice(diceId);
             dices[diceId].addMouseListener(diceListener);
         }else if(to == inactiveDicesPanel){
-            dices[diceId].currentFace = -1;
+            dices[diceId].currentFace = NONE;
             updateDice(diceId);
             dices[diceId].addMouseListener(inactiveDiceListener);
         }
@@ -132,14 +162,14 @@ public class Window extends JFrame
         dices[diceId].currentFace = rng.nextInt(6);
         updateDice(diceId);
 
-        DEBUGPanel.write("throwing dice "+ diceId);
+//        DEBUGPanel.write("throwing dice "+ diceId);
     }
 
     public void flipDice(int diceId)
     {
         dices[diceId].currentFace = (dices[diceId].currentFace + 3) % 6;
         updateDice(diceId);
-        DEBUGPanel.write("flipping dice "+ diceId);
+//        DEBUGPanel.write("flipping dice "+ diceId);
     }
 
     public void updateDice(int diceId)
@@ -160,7 +190,7 @@ public class Window extends JFrame
         {
 //            JOptionPane.showMessageDialog(null,"round over");
             roundEnded = true;
-            DEBUGPanel.write("no more dices, round ended");
+//            DEBUGPanel.write("no more dices, round ended");
             checkWin();
             return;
         }
@@ -171,27 +201,27 @@ public class Window extends JFrame
             {
                 switch(dice.currentFace)
                 {
-                    case 3:
-                    case 4:
-                    case 0:
-                        DEBUGPanel.write("round continues");
+                    case ROCKET:
+                    case HERO:
+                    case MEEPLE:
+//                        DEBUGPanel.write("round continues");
                         return;
                     default:
                         break;
                 }
             }
-            if(dice.currentFace == 2)
+            if(dice.currentFace == HEART)
             {
                 if(inactiveDicesPanel.getComponentCount() > 0)
                 {
-                    DEBUGPanel.write("round continues");
+//                    DEBUGPanel.write("round continues");
                     return;
                 }
             }
-            if(dice.currentFace == 5)
+            if(dice.currentFace == N42)
             {
                 roundPoints++;
-            }else if(dice.currentFace == 1)
+            }else if(dice.currentFace == DRAGON)
             {
                 roundPoints--;
             }
@@ -200,7 +230,7 @@ public class Window extends JFrame
         if(roundPoints < 0)
         {
             winDicesCount = 0;
-            DEBUGPanel.write("there are dragons alive, you lost all your points");
+//            DEBUGPanel.write("there are dragons alive, you lost all your points");
         }else{
             winDicesCount += roundPoints;
             for(int i = 1; i <= winDicesCount ; i++)
@@ -208,7 +238,7 @@ public class Window extends JFrame
 
                  score += i;
             }
-            DEBUGPanel.write("you earned points ");
+//            DEBUGPanel.write("you earned points ");
         }
         roundEnded = true;
         checkWin();
@@ -221,9 +251,9 @@ public class Window extends JFrame
             // Game Ended
             if(score < 30)
             {
-                DEBUGPanel.write("you lose");
+//                DEBUGPanel.write("you lose");
             }else{
-                DEBUGPanel.write("you won");
+//                DEBUGPanel.write("you won");
             }
             //TODO: end properly
             nextRoundButton.setText("Restart Game");
@@ -237,7 +267,7 @@ public class Window extends JFrame
         {
             if (i < 3) // inactive dices
             {
-                dices[i].currentFace = -1;
+                dices[i].currentFace = NONE;
                 moveDice(i, inactiveDicesPanel);
             }
             else // active dices
@@ -247,6 +277,61 @@ public class Window extends JFrame
             updateDice(i);
         }
         roundEnded = false;
+    }
+
+    public void setSelectedDice(int value)
+    {
+        selectedDice = value;
+        int currentFace;
+        if(value == NONE)
+        {
+            currentFace = -1;
+        }else{
+            currentFace = dices[value].currentFace;
+        }
+        ImageIcon image = new ImageIcon(getClass().getResource("/resources/"+ currentFace +".png"));
+        selectedDiceLabel.setIcon(image);
+        String outputText = "";
+        switch (currentFace)
+        {
+            case NONE:
+            {
+                outputText = "Ningun Dado Seleccionado, \n";
+            }break;
+            case MEEPLE:
+            {
+                outputText = "Meeple seleccionado \n" +
+                        "Al usar su habilidad en otro dado, lo vuelve a tirar \n";
+            }break;
+            case DRAGON:
+            {
+                outputText = "Dragon seleccionado \n" +
+                        "Si solo quedan dragones al final de la ronda, pierdes todos los puntos \n";
+            }break;
+            case HEART:
+            {
+                outputText = "Corazon seleccionado \n" +
+                        "Al usar su habilidad en uno de los dados inactivos, lo trae a los dados activos y lo tira \n";
+            }break;
+            case ROCKET:
+            {
+                outputText = "Cohete seleccionado \n" +
+                        "Al usar su habilidad sobre otro dado, lo manda a los dados inactivos \n";
+            }break;
+            case HERO:
+            {
+                outputText = "Heroe seleccionado \n" +
+                        "Al usar su habilidad sobre otro dado, le da la vuelta a} su cara contraria \n";
+            }break;
+            case N42:
+            {
+                outputText = "42 seleccionado \n" +
+                        "Si solo quedan dados 42, se acaba la ronda y se añaden a los dados obtenidos \n";
+            }break;
+        }
+        outputText += "\n\nclick izquierdo para seleccionar un dado \n" +
+                "click derecho para usar habilidad del dado seleccionado \n";
+        diceExplanationText.setText(outputText);
     }
 
     private class DiceListener extends MouseAdapter
@@ -259,43 +344,42 @@ public class Window extends JFrame
             {
                 if (selectedDice == ((Dice) e.getSource()).id)
                 {
-                    selectedDice = -1; //deselecting dice
-
-                    DEBUGPanel.write("Deselecting");
+                    setSelectedDice(NONE); //deselecting dice
+//                    DEBUGPanel.write("Deselecting");
                     return;
                 }
-                selectedDice = ((Dice) e.getSource()).id;
-                DEBUGPanel.write("Selecting "+ selectedDice);
+                setSelectedDice(((Dice) e.getSource()).id);
+//                DEBUGPanel.write("Selecting "+ selectedDice);
             }
             if (e.getButton() == MouseEvent.BUTTON3)
             {
                 if ( (((Dice) e.getSource()).id == selectedDice))
                 {
-                    DEBUGPanel.write("same dice selected");
+//                    DEBUGPanel.write("same dice selected");
                     return;
                 }
-                if((selectedDice == -1))
+                if((selectedDice == NONE))
                 {
-                    DEBUGPanel.write("no dice selected");
+//                    DEBUGPanel.write("no dice selected");
                     return;
                 }
                 switch (dices[selectedDice].currentFace)
                 {
-                    case 0:
+                    case MEEPLE:
                     {
 //                        meeple: throw dice
                         throwDice(((Dice) e.getSource()).id);
                         moveDice(selectedDice, usedDicesPanel);
                         selectedDice = -1;
                     }break;
-                    case 3:
+                    case ROCKET:
                     {
 //                        rocket: move to inactive
                         moveDice(((Dice) e.getSource()).id, inactiveDicesPanel);
                         moveDice(selectedDice, usedDicesPanel);
                         selectedDice = -1;
                     }break;
-                    case 4:
+                    case HERO:
                     {
 //                        hero: flip
                         flipDice(((Dice) e.getSource()).id);
@@ -304,7 +388,7 @@ public class Window extends JFrame
                     }break;
                     default: // (2) heart, (1)dragon, (5)42
                     {
-                        DEBUGPanel.write("can't use ability");
+//                        DEBUGPanel.write("can't use ability");
                         break;
                     }
                 }
@@ -318,13 +402,13 @@ public class Window extends JFrame
         @Override
         public void mouseClicked(MouseEvent e)
         {
-            if (selectedDice != -1)
+            if (selectedDice != NONE)
             {
-                if (dices[selectedDice].currentFace == 2)
+                if (dices[selectedDice].currentFace == HEART)
                 {
                     moveDice(((Dice) e.getSource()).id, activeDicesPanel);
                     moveDice(selectedDice, usedDicesPanel);
-                    selectedDice = -1;
+                    selectedDice = NONE;
 
                     checkRoundEnd();
                 }
@@ -351,8 +435,8 @@ public class Window extends JFrame
 
                     currentRound += 1;
                 }
-                DEBUGPanel.write("current round: "+ currentRound);
-                DEBUGPanel.write("current score: "+ score+", windicescount: "+ winDicesCount);
+//                DEBUGPanel.write("current round: "+ currentRound);
+//                DEBUGPanel.write("current score: "+ score+", windicescount: "+ winDicesCount);
 
             }
         }
